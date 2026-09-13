@@ -48,7 +48,7 @@ biết ai có quyền làm gì với một đánh giá.
    - **Report → Thống kê đánh giá** (nơi xem số liệu)
 
 5. Ra ngoài website, mở một trang sản phẩm bất kỳ và kéo xuống dưới phần mô tả.
-   Bạn sẽ thấy khối **"Đánh giá sản phẩm"**.
+   Bạn sẽ thấy khối **"Đánh giá sản phẩm"** — không cần sửa giao diện.
 
 Khi gỡ cài đặt, plugin tự xoá dữ liệu đánh giá và hai mục menu nói trên.
 
@@ -136,17 +136,22 @@ Vào **Report → Thống kê đánh giá**. Màn hình này cho bạn:
 Điểm trung bình **chỉ tính đánh giá đã duyệt**. Đánh giá đang chờ hoặc bị từ chối
 không bao giờ ảnh hưởng điểm hiển thị ra ngoài.
 
-## Đưa khối đánh giá sang giao diện khác (cho người làm giao diện)
+## Giao diện (cho người làm giao diện)
 
-Plugin tự động hiện khối đánh giá trên giao diện **GP247Front**. Nếu bạn dùng
-giao diện khác, mở file trang chi tiết sản phẩm của giao diện đó và thêm đúng
-đoạn sau vào vị trí bạn muốn:
+**Bình thường bạn không phải làm gì cả.** Khối đánh giá tự hiện: trang chi tiết
+sản phẩm do `gp247/shop` phát hành đã có sẵn một **điểm cắm**, và plugin tự render
+vào đó khi được cài. Mọi giao diện dựng trên trang này — kể cả GP247Front — đều có
+khối đánh giá mà không cần sửa gì.
+
+Chỉ khi giao diện của bạn tự viết lại trang chi tiết sản phẩm thì mới cần thêm
+điểm cắm vào vị trí bạn muốn:
 
 ```blade
-@if (function_exists('gp247_product_rating_enabled') && gp247_product_rating_enabled())
-    @livewire('gp247-productrating-front::review-box', ['productId' => $product->id], key('product-review-'.$product->id))
-@endif
+{!! gp247_render_plugin_hook('shop_product_detail_bottom', ['product' => $product]) !!}
 ```
+
+Một dòng này phục vụ **mọi plugin** hiện tại và sau này, không riêng plugin đánh
+giá. Giao diện không gọi nó thì đơn giản là không hiện gì.
 
 Muốn đổi cách hiển thị mà không sửa plugin: tạo file
 `livewire/productrating_review-box.blade.php` trong thư mục giao diện của bạn.

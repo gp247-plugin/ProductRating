@@ -48,7 +48,7 @@ is allowed to do what with a review.
    - **Report → Review statistics** (where you read the numbers)
 
 5. Open any product page on your storefront and scroll below the description.
-   You will see the **"Ratings & reviews"** block.
+   You will see the **"Ratings & reviews"** block — no theme editing needed.
 
 Uninstalling removes the review data and both menu entries.
 
@@ -136,19 +136,24 @@ Go to **Report → Review statistics**. The screen shows you:
 The average counts **approved reviews only**. A pending or rejected review never
 moves the number shoppers see.
 
-## Adding the block to another theme (for theme designers)
+## Themes (for theme designers)
 
-The plugin shows the review block automatically on the **GP247Front** theme. If you
-use a different theme, open that theme's product-detail file and add this snippet
-wherever you want the block:
+**You normally do not have to do anything.** The review block appears by itself:
+the product-detail screen shipped by `gp247/shop` hosts an extension point, and
+the plugin renders into it when installed. Every theme built on that screen —
+GP247Front included — gets the block for free.
+
+If your theme replaced the product-detail screen with its own markup, add the
+extension point wherever you want plugin output to appear:
 
 ```blade
-@if (function_exists('gp247_product_rating_enabled') && gp247_product_rating_enabled())
-    @livewire('gp247-productrating-front::review-box', ['productId' => $product->id], key('product-review-'.$product->id))
-@endif
+{!! gp247_render_plugin_hook('shop_product_detail_bottom', ['product' => $product]) !!}
 ```
 
-To change how it looks without touching the plugin, create a file named
+One line, and it hosts every present and future plugin, not just this one. A
+theme that does not call it simply shows nothing.
+
+To change how the box looks without touching the plugin, create a file named
 `livewire/productrating_review-box.blade.php` inside your theme folder. The system
 prefers your file, and the plugin's original stays untouched on update.
 

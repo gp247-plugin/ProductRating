@@ -30,6 +30,18 @@
          require_once __DIR__.'/function.php';
      }
 
+     // Storefront extension point (ADR front_storefront-plugin-hooks): render the
+     // review box under the product body WITHOUT any site having to edit its
+     // template. Runtime-append, the same idiom front uses for layout_page and
+     // seo_sitemap_providers. A template that does not call the hook simply shows
+     // nothing — see readme for the manual fallback.
+     $hooks = config('gp247-config.front.plugin_hooks', []);
+     $hooks['shop_product_detail_bottom'][] = [
+         'key' => $config['configKey'],
+         'callback' => [\App\GP247\Plugins\ProductRating\Hooks\ProductDetailHook::class, 'render'],
+     ];
+     config(['gp247-config.front.plugin_hooks' => $hooks]);
+
      // US-PLG-004: register the plugin's Livewire class namespaces so its
      // components resolve without relying on Composer autoload discovery at the
      // host. The component name travels in every livewire/update round-trip, so
