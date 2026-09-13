@@ -422,3 +422,87 @@ if (!function_exists('gp247_product_rating_image_dir')) {
         return 'product_review/' . date('Y') . '/' . date('m');
     }
 }
+
+/*
+ |------------------------------------------------------------------------------
+ | Seller-side contract (S5-1)
+ |------------------------------------------------------------------------------
+ | A marketplace vendor answers the reviews of the products their own store
+ | sells. That surface lives in another plugin (MultiVendor), behind another auth
+ | guard (`vendor`) and another shell, so it cannot be a screen of this plugin —
+ | but it must not import this plugin's classes either, or a site without
+ | ProductRating would fatal on a class that is not there.
+ |
+ | So the capability is published as functions: a consumer checks
+ | function_exists() and degrades to "no reviews screen". The WRITE function is
+ | also the fence — it only ever touches the four reply columns of a review that
+ | belongs to the given seller store, so a vendor surface has no path to approve,
+ | reject or delete, by construction rather than by convention.
+ */
+
+if (!function_exists('gp247_product_rating_review_model')) {
+    /**
+     * A fresh review model, for a consumer that needs to build a listing query
+     * (a Livewire data table) without naming this plugin's classes.
+     *
+     * @return \App\GP247\Plugins\ProductRating\Models\ProductReview
+     *
+     * @aidlc-unit plugin-product-rating
+     * @aidlc-story US-product-rating-seller-reply-contract
+     */
+    function gp247_product_rating_review_model()
+    {
+        return new ProductReview();
+    }
+}
+
+if (!function_exists('gp247_product_rating_seller_constrain')) {
+    /**
+     * Narrow a review query to the reviews of ONE seller store — the marketplace
+     * dimension. Applies the same semantics as the model's forSeller scope,
+     * including rows written before the seller column existed.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int|string $sellerStoreId
+     * @return \Illuminate\Database\Eloquent\Builder
+     *
+     * @aidlc-unit plugin-product-rating
+     * @aidlc-story US-product-rating-seller-reply-contract
+     */
+    function gp247_product_rating_seller_constrain($query, $sellerStoreId)
+    {
+        return $query->forSeller($sellerStoreId);
+    }
+}
+
+if (!function_exists('gp247_product_rating_seller_reply')) {
+    /**
+     * Publish (or withdraw, with an empty body) a seller's public answer.
+     *
+     * The ONLY write this plugin opens to a seller. It re-reads the review
+     * through the seller filter, so an id crafted by the client resolves to
+     * nothing instead of reaching another store's review, and it delegates to
+     * ProductReview::publishReply(), which cannot change moderation state.
+     *
+     * @param int        $reviewId
+     * @param int|string $sellerStoreId The store answering (it must own the review).
+     * @param string     $body          Answer text; empty withdraws the answer.
+     * @param string|null $userId       The vendor user answering, for the audit trail.
+     * @return bool True when the answer was written, false when the review is not this seller's.
+     *
+     * @aidlc-unit plugin-product-rating
+     * @aidlc-story US-product-rating-seller-reply-contract
+     */
+    function gp247_product_rating_seller_reply(int $reviewId, $sellerStoreId, string $body, ?string $userId = null): bool
+    {
+        $review = ProductReview::withTrashed()->forSeller($sellerStoreId)->find($reviewId);
+        if ($review === null) {
+            return false;
+        }
+
+        $review->publishReply($body, $userId, (string) $sellerStoreId);
+
+        return true;
+    }
+}
+

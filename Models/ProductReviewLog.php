@@ -44,6 +44,7 @@ class ProductReviewLog extends Model
         'note',
         'admin_id',
         'customer_id',
+        'store_id',
     ];
 
     protected $casts = [
@@ -74,10 +75,15 @@ class ProductReviewLog extends Model
         string $action,
         ?string $reasonCode = null,
         ?string $note = null,
-        ?string $customerId = null
+        ?string $customerId = null,
+        ?string $actorId = null,
+        ?string $storeId = null
     ): void {
-        $adminId = null;
-        if ($customerId === null && function_exists('admin') && admin()->user()) {
+        $adminId = $actorId;
+        // WHY the explicit actor wins: a marketplace vendor acts behind the
+        // `vendor` guard, where admin()->user() is null — without it every vendor
+        // action would be logged as "nobody".
+        if ($adminId === null && $customerId === null && function_exists('admin') && admin()->user()) {
             $adminId = admin()->user()->id;
         }
 
@@ -88,6 +94,7 @@ class ProductReviewLog extends Model
             'note' => $note !== null ? mb_substr($note, 0, 255) : null,
             'admin_id' => $adminId,
             'customer_id' => $customerId,
+            'store_id' => $storeId,
         ]);
     }
 }

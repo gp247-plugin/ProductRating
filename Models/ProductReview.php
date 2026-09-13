@@ -47,6 +47,9 @@ class ProductReview extends Model
         'off_topic',
     ];
 
+    /** Hard cap on a public answer (shared by every surface that writes one). */
+    public const REPLY_MAX = 1000;
+
     protected $table = GP247_DB_PREFIX . 'product_review';
 
     protected $fillable = [
@@ -65,6 +68,7 @@ class ProductReview extends Model
         'reply_content',
         'reply_at',
         'reply_by',
+        'reply_store_id',
         'ip',
     ];
 
@@ -220,5 +224,41 @@ class ProductReview extends Model
         $this->save();
 
         $this->delete();
+    }
+
+    /**
+     * Publish (or withdraw) the single public answer to this review.
+     *
+     * The one write path for an answer, shared by the marketplace owner's
+     * moderation queue and by a vendor answering through MultiVendor, so both
+     * clean the body the same way, log the same event, and cannot drift apart.
+     * An empty body withdraws the answer together with its attribution.
+     *
+     * It touches ONLY the four reply columns: no caller of this method can
+     * approve, reject or delete, which is what lets a seller be given the
+     * answering power without the moderation power.
+     *
+     * @param string      $body         Raw answer text (cleaned + truncated here).
+     * @param string|null $userId       Who answered: admin_user id, or vendor_user id when $storeId is set.
+     * @param string|null $storeId      The answering vendor store; null = the marketplace/shop owner.
+     * @return void
+     *
+     * @aidlc-unit plugin-product-rating
+     * @aidlc-story US-product-rating-seller-reply-contract
+     */
+    public function publishReply(string $body, ?string $userId = null, ?string $storeId = null): void
+    {
+        // gp247_clean strips scripting/markup: the answer is rendered on a public
+        // page beside customer content.
+        $body = trim(gp247_clean(mb_substr($body, 0, self::REPLY_MAX)));
+        $has = $body !== '';
+
+        $this->reply_content = $has ? $body : null;
+        $this->reply_at = $has ? now() : null;
+        $this->reply_by = $has ? $userId : null;
+        $this->reply_store_id = $has ? $storeId : null;
+        $this->save();
+
+        ProductReviewLog::record((int) $this->id, ProductReviewLog::ACTION_REPLY, null, $body, null, $userId, $storeId);
     }
 }

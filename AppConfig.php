@@ -70,6 +70,33 @@ class AppConfig extends ExtensionConfigDefault
         return $return;
     }
 
+    /**
+     * Update hook — the core calls this after replacing the plugin files
+     * (ExtensionUpdateManager::update), unconditionally: a plugin without it
+     * fatals on "Call to undefined method AppConfig::update()" and the whole
+     * update is rolled back.
+     *
+     * Everything it does is re-entrant, so running it from any older version (or
+     * twice) converges: add columns introduced after 1.0 and re-seed settings
+     * that firstOrCreate will skip when the site already chose a value.
+     *
+     * @param string|null $fromVersion Version the site is coming from.
+     * @return array{error:int, msg:string}
+     *
+     * @aidlc-unit plugin-product-rating
+     * @aidlc-story US-product-rating-seller-reply-contract
+     */
+    public function update(?string $fromVersion = null)
+    {
+        try {
+            (new ExtensionModel)->installExtension();
+        } catch (\Throwable $e) {
+            return ['error' => 1, 'msg' => $e->getMessage()];
+        }
+
+        return ['error' => 0, 'msg' => ''];
+    }
+
     public function uninstall()
     {
         //Please delete all values inserted in the installation step

@@ -569,6 +569,43 @@ class ReviewBox extends BaseFrontComponent
             'imagesAllowed' => $this->imagesAllowed(),
             'imageMax' => $this->imageMax(),
             'ownReview' => $this->ownReview(),
+            // Who answered: on a marketplace a vendor answers its own reviews, and
+            // the label must name that shop instead of the generic "the shop".
+            // ONE lookup for the whole box: every review here is of one product,
+            // so every vendor answer among them comes from the same store.
+            'replyStoreName' => $this->replyStoreName(),
         ];
+    }
+
+    /**
+     * Display name of the vendor store that answered reviews of this product, or
+     * null when the answers (if any) came from the marketplace/shop owner.
+     *
+     * Guarded: a store row can be missing on a site mid-migration, and a label is
+     * never worth a 500 on a product page.
+     *
+     * @return string|null
+     *
+     * @aidlc-unit plugin-product-rating
+     * @aidlc-story US-product-rating-seller-reply-contract
+     */
+    protected function replyStoreName(): ?string
+    {
+        $storeId = ProductReview::approved()
+            ->where('product_id', $this->productId)
+            ->whereNotNull('reply_store_id')
+            ->value('reply_store_id');
+
+        if (!$storeId) {
+            return null;
+        }
+
+        try {
+            $name = trim((string) (\GP247\Core\Models\AdminStore::find($storeId)?->getTitle() ?? ''));
+
+            return $name !== '' ? $name : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

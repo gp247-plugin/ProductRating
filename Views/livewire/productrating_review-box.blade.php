@@ -301,7 +301,14 @@
                              answers, never in place of it. --}}
                         <div class="mt-3 rounded-lg border border-ink-100 bg-ink-50 p-3">
                             <p class="text-xs font-medium text-ink-800 mb-1">
-                                {{ gp247_language_render('Plugins/ProductRating::lang.front.shop_reply') }}
+                                {{-- On a marketplace the answer comes from the vendor, so it
+                                     is signed with that shop's name; elsewhere (and for an
+                                     answer written by the site owner) the generic label stands. --}}
+                                @if ($review->reply_store_id && !empty($replyStoreName))
+                                    {{ gp247_language_render('Plugins/ProductRating::lang.front.seller_reply') }}: {{ $replyStoreName }}
+                                @else
+                                    {{ gp247_language_render('Plugins/ProductRating::lang.front.shop_reply') }}
+                                @endif
                             </p>
                             <p class="text-sm text-ink-700 leading-relaxed">{{ $review->reply_content }}</p>
                         </div>

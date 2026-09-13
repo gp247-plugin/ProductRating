@@ -37,6 +37,19 @@
                     @endforeach
                 </select>
             @endif
+
+            {{-- Seller filter: the store that SELLS the reviewed product. On a
+                 marketplace this is the dimension that says whose review it is —
+                 the store above (where it was written) is ROOT for every vendor. --}}
+            @if (!empty($sellerOptions))
+                <select wire:model.live="sellerFilter" data-testid="productrating-seller-filter"
+                    class="rounded-lg border border-gray-300 px-2 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+                    <option value="">{{ gp247_language_render('Plugins/ProductRating::lang.admin.seller_all') }}</option>
+                    @foreach ($sellerOptions as $sellerId => $sellerName)
+                        <option value="{{ $sellerId }}">{{ $sellerName }}</option>
+                    @endforeach
+                </select>
+            @endif
         </x-slot:filters>
     </x-gp247::list-toolbar>
 

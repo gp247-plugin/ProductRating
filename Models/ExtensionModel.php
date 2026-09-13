@@ -68,6 +68,8 @@ class ExtensionModel
      */
     protected function createTables(): void
     {
+        $this->upgradeTables();
+
         if (!Schema::hasTable(GP247_DB_PREFIX . self::TABLE_REVIEW)) {
             Schema::create(GP247_DB_PREFIX . self::TABLE_REVIEW, function ($table) {
                 $table->increments('id');
@@ -116,6 +118,11 @@ class ExtensionModel
                 // "1366 Incorrect integer value" the first time a real admin
                 // replies. Matches admin_user.id.
                 $table->char('reply_by', 36)->nullable();
+                // The STORE that answered, on a marketplace where the seller is
+                // not the site owner: null = the marketplace/shop owner answered,
+                // set = that vendor store answered. It also says which namespace
+                // reply_by belongs to (admin_user when null, vendor_user when set).
+                $table->char('reply_store_id', 36)->nullable();
                 $table->string('ip', 45)->nullable();
                 $table->timestamps();
                 // Customer-initiated removal is a TOMBSTONE, not an erase: the
@@ -150,8 +157,13 @@ class ExtensionModel
                 $table->string('note', 255)->nullable();
                 // Exactly one of these identifies the actor. Both are char(36)
                 // because every GP247 id is a string ("AU-…", "CUS-…").
+                // The acting user: an admin_user id, or a vendor_user id when
+                // store_id below names the vendor store that acted.
                 $table->char('admin_id', 36)->nullable();
                 $table->char('customer_id', 36)->nullable();
+                // The vendor store that acted, on a marketplace; null = the
+                // marketplace/shop owner (or the customer).
+                $table->char('store_id', 36)->nullable();
                 $table->timestamp('created_at')->nullable();
 
                 $table->index('review_id', 'idx_review_log_review');
@@ -169,6 +181,35 @@ class ExtensionModel
                 $table->timestamps();
 
                 $table->index('review_id', 'idx_review_image_review');
+            });
+        }
+    }
+
+    /**
+     * Add columns introduced after 1.0 to an existing table.
+     *
+     * Pattern A again: the plugin owns no migrations folder, so every additive
+     * change is a guarded ALTER that converges — running it on a fresh install
+     * (table absent) or on an already-upgraded one is a no-op.
+     *
+     * No backfill: every answer written before this column existed came from the
+     * marketplace owner, which is exactly what null means.
+     *
+     * @return void
+     */
+    protected function upgradeTables(): void
+    {
+        $table = GP247_DB_PREFIX . self::TABLE_REVIEW;
+        if (Schema::hasTable($table) && !Schema::hasColumn($table, 'reply_store_id')) {
+            Schema::table($table, function ($t) {
+                $t->char('reply_store_id', 36)->nullable()->after('reply_by');
+            });
+        }
+
+        $log = GP247_DB_PREFIX . self::TABLE_REVIEW_LOG;
+        if (Schema::hasTable($log) && !Schema::hasColumn($log, 'store_id')) {
+            Schema::table($log, function ($t) {
+                $t->char('store_id', 36)->nullable()->after('customer_id');
             });
         }
     }

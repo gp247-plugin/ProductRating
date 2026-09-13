@@ -39,6 +39,18 @@ class ReviewManager extends DataTableComponent
     /** @var string Store filter for the root admin: '' = every store. */
     public string $storeFilter = '';
 
+    /**
+     * Seller-store filter: '' = every seller.
+     *
+     * WHY a second store filter: a review carries two stores — the storefront it
+     * was written on ($storeFilter) and the store that SELLS the product. On a
+     * marketplace the first is ROOT for every vendor, so it is the seller
+     * dimension that answers "whose review is this".
+     *
+     * @var string
+     */
+    public string $sellerFilter = '';
+
     /** @var int|null Review the reject panel is open for; null = closed. */
     public ?int $rejectingId = null;
 
@@ -54,8 +66,8 @@ class ReviewManager extends DataTableComponent
     /** @var string The public answer being written. */
     public string $replyContent = '';
 
-    /** @var int Hard cap on a public reply. */
-    protected const REPLY_MAX = 1000;
+    /** @var int Hard cap on a public reply (the model owns the rule). */
+    protected const REPLY_MAX = ProductReview::REPLY_MAX;
 
     /**
      * @return void
@@ -149,6 +161,10 @@ class ReviewManager extends DataTableComponent
             $query->where('store_id', $this->storeFilter);
         }
 
+        if ($this->sellerFilter !== '') {
+            $query->forSeller($this->sellerFilter);
+        }
+
         if ($this->statusFilter !== '') {
             $query->where('status', (int) $this->statusFilter);
         }
@@ -235,6 +251,14 @@ class ReviewManager extends DataTableComponent
      * @return void
      */
     public function updatedStoreFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * @return void
+     */
+    public function updatedSellerFilter(): void
     {
         $this->resetPage();
     }
@@ -393,18 +417,14 @@ class ReviewManager extends DataTableComponent
             return;
         }
 
-        // gp247_clean strips scripting/markup: the answer is rendered on a
-        // public page beside customer content.
-        $body = trim(gp247_clean(mb_substr($this->replyContent, 0, self::REPLY_MAX)));
-
-        $review->reply_content = $body !== '' ? $body : null;
-        $review->reply_at = $body !== '' ? now() : null;
-        $review->reply_by = $body !== '' && function_exists('admin') && admin()->user()
-            ? admin()->user()->id
-            : null;
-        $review->save();
-
-        ProductReviewLog::record((int) $review->id, ProductReviewLog::ACTION_REPLY, null, $body);
+        // One write path for an answer, shared with the vendor surface
+        // (ProductReview::publishReply): same cleaning, same cap, same log entry.
+        // storeId stays null — this answer comes from the marketplace owner.
+        $review->publishReply(
+            $this->replyContent,
+            function_exists('admin') && admin()->user() ? admin()->user()->id : null,
+            null
+        );
 
         $this->cancelReply();
         $this->notify('success', trans('Plugins/ProductRating::lang.admin.reply_saved'));
@@ -546,6 +566,7 @@ class ReviewManager extends DataTableComponent
                 ProductReview::STATUS_APPROVED => 'green',
                 ProductReview::STATUS_REJECTED => 'gray',
             ],
+            'sellerOptions' => $this->sellerOptions(),
             'rejectReasons' => collect(ProductReview::REJECT_REASONS)
                 ->mapWithKeys(fn ($code) => [
                     $code => trans('Plugins/ProductRating::lang.admin.reject_reason_' . $code),
@@ -571,5 +592,52 @@ class ReviewManager extends DataTableComponent
     protected function authScreenUri(): ?string
     {
         return GP247_ADMIN_PREFIX . '/productrating/review';
+    }
+
+    /**
+     * Seller stores to choose from, keyed by id — the stores that actually have
+     * reviews, so the filter never offers an option that returns nothing.
+     *
+     * @return array<string, string>
+     *
+     * @aidlc-unit plugin-product-rating
+     * @aidlc-story US-product-rating-seller-reply-contract
+     */
+    public function sellerOptions(): array
+    {
+        $ids = $this->query()->newQuery()
+            ->whereNotNull('seller_store_id')
+            ->distinct()
+            ->pluck('seller_store_id')
+            ->filter()
+            ->all();
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $out = [];
+        foreach (\GP247\Core\Models\AdminStore::whereIn('id', $ids)->get() as $store) {
+            $name = trim((string) $store->getTitle());
+            $out[(string) $store->id] = $name !== '' ? $name : (string) $store->code;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Display name of the store that answered a review, for the queue's
+     * "answered by" marker. Names are resolved once per screen.
+     *
+     * @param string|null $storeId
+     * @return string|null
+     */
+    public function sellerName(?string $storeId): ?string
+    {
+        if (!$storeId) {
+            return null;
+        }
+
+        return $this->sellerOptions()[$storeId] ?? $storeId;
     }
 }

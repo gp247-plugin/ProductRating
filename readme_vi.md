@@ -21,6 +21,8 @@ biết ai có quyền làm gì với một đánh giá.
 - Màn hình **duyệt đánh giá** và màn hình **thống kê theo từng gian hàng**.
 - Bạn **trả lời công khai** dưới mỗi đánh giá.
 - Khách **tự sửa hoặc gỡ** đánh giá của chính mình.
+- Trên **sàn nhiều người bán** (plugin MultiVendor), mỗi gian hàng tự trả lời đánh
+  giá sản phẩm mình bán, và phản hồi hiển thị kèm tên gian hàng đó.
 
 ## Cài đặt
 

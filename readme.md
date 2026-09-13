@@ -21,6 +21,8 @@ is allowed to do what with a review.
 - A **moderation screen** and a **per-shop statistics screen**.
 - You **answer publicly** underneath any review.
 - Customers can **edit or withdraw** their own review.
+- On a **marketplace** (the MultiVendor plugin), each seller answers the reviews
+  of what their own shop sells, and the answer is signed with that shop's name.
 
 ## Installing
 
