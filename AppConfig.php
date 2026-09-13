@@ -10,7 +10,6 @@ use App\GP247\Plugins\ProductRating\Models\ProductReview;
 use GP247\Core\Models\AdminConfig;
 use GP247\Core\Models\AdminHome;
 use GP247\Core\ExtensionConfigDefault;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 class AppConfig extends ExtensionConfigDefault
 {
@@ -182,56 +181,6 @@ class AppConfig extends ExtensionConfigDefault
         // Intentionally empty — see the docblock above.
     }
 
-
-    /**
-     * Migrate plugin data after a 1-click update replaced the plugin's files.
-     *
-     * Every step is guarded and safe to run twice: the update flow rolls back to
-     * the previous version if this returns an error, so a half-applied schema
-     * change must never be possible.
-     *
-     * @param string|null $fromVersion Version installed before this update.
-     * @return array{error:int,msg:string}
-     *
-     * @aidlc-unit plugin-product-rating
-     * @aidlc-story US-product-rating-seller-dimension
-     */
-    public function update(?string $fromVersion = null)
-    {
-        try {
-            $table = GP247_DB_PREFIX . ExtensionModel::TABLE_REVIEW;
-
-            // 1.1 added the seller dimension so a marketplace vendor page can
-            // group reviews by the store that SELLS the product, which store_id
-            // cannot express on a shared-domain marketplace.
-            if (Schema::hasTable($table) && !Schema::hasColumn($table, 'seller_store_id')) {
-                Schema::table($table, function ($table) {
-                    $table->char('seller_store_id', 36)->nullable()->after('store_id');
-                    $table->index(['seller_store_id', 'status'], 'idx_review_seller_status');
-                });
-
-                (new ExtensionModel)->backfillSellerStore();
-            }
-
-            // 1.2 moved the review entitlement from "one per product" to "one per
-            // order per product" (industry standard): buying twice earns two
-            // reviews, and deleting one never hands back a free slot.
-            (new ExtensionModel)->upgradeEntitlementToPerOrder();
-
-            // 1.3 made moderation accountable: a rejection must carry a reason
-            // from a closed list, every decision is logged, the shop can reply
-            // publicly, and a customer-removed review becomes a tombstone.
-            (new ExtensionModel)->upgradeModerationAccountability();
-
-            // 1.4 fixed the actor columns: GP247 ids are strings ("AU-AAAAA"),
-            // so int columns rejected every real reply and audit entry.
-            (new ExtensionModel)->upgradeActorIdsToString();
-        } catch (\Throwable $e) {
-            return ['error' => 1, 'msg' => $e->getMessage()];
-        }
-
-        return ['error' => 0, 'msg' => ''];
-    }
 
     /**
      * Target of the "config" button on the Plugins screen.
