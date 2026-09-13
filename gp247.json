@@ -1,0 +1,17 @@
+{
+    "name": "Product Rating & Review",
+    "image": "images/product-rating.png",
+    "auth": "GP247",
+    "email": "support@gp247.net",
+    "link": "https://GP247.net",
+    "configGroup": "Plugins",
+    "configCode": "Other",
+    "configKey": "ProductRating",
+    "version": "1.0",
+    "requireCore": ["3.0"],
+    "requireUpdateFrom": "1.0",
+    "requireComposerPackages": ["gp247/shop"],
+    "requireGp247Extensions": [],
+    "requireLivewire": true,
+    "storeScope": "store"
+}
