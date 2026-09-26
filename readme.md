@@ -54,6 +54,28 @@ is allowed to do what with a review.
 
 Uninstalling removes the review data and both menu entries.
 
+### Install from the command line (CLI, gp247 3.x)
+
+Since gp247 3.x you can download **ProductRating** from the GP247 library and install it straight from the command line, without opening the admin. Open a terminal in the website's root folder and run:
+
+```bash
+# 1) Once per website: register the (free) API License that connects the site to the GP247 library
+php artisan gp247:ext-register-license
+
+# 2) Download the plugin from the library and install it
+php artisan gp247:ext-install --type=plugin --key=ProductRating
+```
+
+- Before step 1, make sure `APP_URL` in `.env` is the website's **real domain** (not `http://localhost`) — the license is bound to that domain.
+- Once installed, the plugin is **enabled** and caches are refreshed automatically; nothing else is needed in the admin.
+- The command checks the requirements declared in `gp247.json` (core version, composer packages, required plugins) and stops with a clear message if something is missing.
+- This plugin requires the `gp247/shop` package; if it is missing, the command stops and tells you.
+- If the folder `app/GP247/Plugins/ProductRating` is already on the server (copied manually or shipped with the installer), the command **installs it in place** instead of downloading it again.
+- The command refuses a plugin that is already installed. To move to a newer version, run `php artisan gp247:ext-update --type=plugin --key=ProductRating`.
+- Append `--json` to get machine-readable output (for scripts/CI).
+- The command replaces steps 1–2 above. The post-install steps still apply: if clicking the new menu gives a "page not found" error, still run `php artisan optimize:clear` as in step 3; then check the result as in step 4 (the two new menu entries) and step 5 (the **"Ratings & reviews"** block on a product page).
+- More: [Installing Plugins & Templates](https://github.com/gp247net/gp247-docs/blob/main/extension/install-extension.md) · [Command reference](https://github.com/gp247net/gp247-docs/blob/main/system/command-line-reference.md).
+
 ## Settings
 
 Go to **Plugins** and click **Config** on the Product Rating & Review row.
@@ -274,4 +296,4 @@ All of them count **approved** reviews only.
 
 ---
 
-<sub>📅 **Last updated:** 2026-09-13 · ✍️ **Author:** GP247</sub>
+<sub>📅 **Last updated:** 2026-09-25 · ✍️ **Author:** GP247</sub>
