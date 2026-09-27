@@ -3,8 +3,8 @@
 
 namespace App\GP247\Plugins\ProductRating\Livewire;
 
+use App\GP247\Plugins\ProductRating\Services\ReviewService;
 use App\GP247\Plugins\ProductRating\Models\ProductReview;
-use App\GP247\Plugins\ProductRating\Models\ProductReviewLog;
 use GP247\Core\AdminShell\Domain\AdminUserContract;
 use GP247\Core\AdminShell\Infrastructure\DataTableComponent;
 use GP247\Core\AdminShell\Infrastructure\HasStoreScopeUi;
@@ -281,15 +281,7 @@ class ReviewManager extends DataTableComponent
             return;
         }
 
-        $review->status = ProductReview::STATUS_APPROVED;
-        $review->approved_at = now();
-        // Clear a previous rejection so the row does not keep claiming a reason
-        // for a decision that has since been reversed.
-        $review->reject_reason = null;
-        $review->reject_note = null;
-        $review->save();
-
-        ProductReviewLog::record((int) $review->id, ProductReviewLog::ACTION_APPROVE);
+        ReviewService::approve($review);
 
         $this->notify('success', trans('Plugins/ProductRating::lang.admin.moderated'));
     }
@@ -350,18 +342,8 @@ class ReviewManager extends DataTableComponent
             return;
         }
 
-        $review->status = ProductReview::STATUS_REJECTED;
-        $review->approved_at = null;
-        $review->reject_reason = $this->rejectReason;
-        $review->reject_note = gp247_clean($this->rejectNote) ?: null;
-        $review->save();
-
-        ProductReviewLog::record(
-            (int) $review->id,
-            ProductReviewLog::ACTION_REJECT,
-            $review->reject_reason,
-            $review->reject_note
-        );
+        // The closed-list rule is enforced again inside the service.
+        ReviewService::reject($review, (string) $this->rejectReason, (string) $this->rejectNote);
 
         $this->cancelReject();
         $this->notify('success', trans('Plugins/ProductRating::lang.admin.moderated'));

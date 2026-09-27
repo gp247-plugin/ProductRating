@@ -3,6 +3,7 @@
 
 namespace App\GP247\Plugins\ProductRating\Livewire\Front;
 
+use App\GP247\Plugins\ProductRating\Services\ReviewService;
 use App\GP247\Plugins\ProductRating\Models\ProductReview;
 use App\GP247\Plugins\ProductRating\Models\ProductReviewImage;
 use App\GP247\Plugins\ProductRating\Models\ProductReviewLog;
@@ -145,46 +146,7 @@ class ReviewBox extends BaseFrontComponent
      */
     protected function entitlement(): array
     {
-        $customer = $this->currentCustomer();
-        if ($customer === null) {
-            return ['order_id' => null, 'blocked' => 'guest'];
-        }
-
-        $storeId = $this->storeId();
-
-        // A purchase they have not spent yet wins, even when the requirement is
-        // off: it carries the "verified purchase" badge, and spending the free
-        // unverified slot instead would waste it.
-        $reviewable = gp247_product_rating_reviewable_order($this->productId, $customer->id, $storeId);
-        if ($reviewable !== null) {
-            return ['order_id' => $reviewable, 'blocked' => null];
-        }
-
-        if ((int) gp247_product_rating_config('require_purchased', $storeId) === 1) {
-            // Distinguish "never bought it" from "bought it and already used
-            // that purchase" — the wrong message reads as a lost order.
-            $purchased = gp247_product_rating_purchased_order($this->productId, $customer->id, $storeId);
-
-            return [
-                'order_id' => null,
-                'blocked' => $purchased === null ? 'not_purchased' : 'already_reviewed',
-            ];
-        }
-
-        // withTrashed: a review the customer withdrew is a TOMBSTONE that still
-        // holds this slot. Without it the check would report the slot free, the
-        // customer would be offered the form, and the insert would then die on
-        // the unique key — and, worse, removing a review would become a way to
-        // score the same product again and again.
-        $usedFreeSlot = ProductReview::withTrashed()
-            ->where('customer_id', $customer->id)
-            ->where('product_id', $this->productId)
-            ->where('order_id', '')
-            ->exists();
-
-        return $usedFreeSlot
-            ? ['order_id' => null, 'blocked' => 'already_reviewed']
-            : ['order_id' => '', 'blocked' => null];
+        return ReviewService::entitlement($this->productId, $this->currentCustomer(), $this->storeId());
     }
 
 
@@ -413,21 +375,18 @@ class ReviewBox extends BaseFrontComponent
      */
     public function submit(): void
     {
-        $customer = $this->currentCustomer();
-        if ($customer === null) {
+        if ($this->currentCustomer() === null) {
             // Login is a hard requirement, never a setting.
             throw ValidationException::withMessages([
                 'rating' => trans('Plugins/ProductRating::lang.front.login_required'),
             ]);
         }
 
-        $storeId = $this->storeId();
-
         // Re-resolved here rather than trusting anything the client sent: the
         // rendered state may be minutes old, and the update endpoint is a plain
-        // HTTP request.
+        // HTTP request. Checked before the form so the refusal wins over form
+        // errors; the service checks it again on write.
         $entitlement = $this->entitlement();
-
         if ($entitlement['blocked'] !== null) {
             throw ValidationException::withMessages([
                 'rating' => trans('Plugins/ProductRating::lang.front.' . (
@@ -436,35 +395,16 @@ class ReviewBox extends BaseFrontComponent
             ]);
         }
 
-        $orderId = (string) $entitlement['order_id'];
-
         $data = $this->validate($this->rules());
 
-        $autoApprove = (int) gp247_product_rating_config('auto_approve', $storeId) === 1;
-
-        $review = ProductReview::create([
-            'store_id' => $storeId,
-            // The seller dimension a shop/vendor page groups by. On a shared-domain
-            // marketplace store_id is ROOT for every vendor, so it cannot tell two
-            // shops apart; the product's owner can. Falls back to the storefront
-            // store, which is the same value on a non-marketplace site.
-            'seller_store_id' => gp247_product_rating_seller_store_id($this->productId) ?? $storeId,
-            'product_id' => $this->productId,
-            'customer_id' => $customer->id,
-            // The purchase this review is the entitlement of; '' when the
-            // customer had none (only possible while the requirement is off).
-            // Also what the "verified purchase" badge reads, so the badge keeps
-            // working if the setting changes later.
-            'order_id' => $orderId,
-            'customer_name' => $customer->name,
-            'rating' => (int) $data['rating'],
-            // gp247_clean strips scripting/markup: this text is rendered on a
-            // public page next to other customers' content.
-            'content' => gp247_clean((string) ($data['content'] ?? '')),
-            'status' => $autoApprove ? ProductReview::STATUS_APPROVED : ProductReview::STATUS_PENDING,
-            'approved_at' => $autoApprove ? now() : null,
-            'ip' => request()->ip(),
-        ]);
+        $review = ReviewService::submit(
+            $this->productId,
+            $this->currentCustomer(),
+            (int) $data['rating'],
+            (string) ($data['content'] ?? ''),
+            $this->storeId(),
+            request()->ip()
+        );
 
         if ($this->imagesAllowed()) {
             $this->storePhotos($review);
