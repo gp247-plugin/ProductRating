@@ -74,7 +74,7 @@ php artisan gp247:ext-install --type=plugin --key=ProductRating
 - プラグインがすでにインストール済みの場合、コマンドは拒否します。新しいバージョンにするには `php artisan gp247:ext-update --type=plugin --key=ProductRating` を実行します。
 - コマンドの末尾に `--json` を付けると、機械可読形式で結果を受け取れます（スクリプト・CI 向け）。
 - このコマンドは上記の手順 1〜2 の代わりになります。インストール後の手順はそのままです。新しいメニューをクリックして「ページが見つかりません」というエラーが出た場合は、手順 3 と同様に `php artisan optimize:clear` を実行してください。その後、手順 4（2 つの新しいメニュー項目）と手順 5（商品ページの**「商品レビュー」**ブロック）のとおり確認します。
-- 詳細：[プラグイン・テンプレートのインストールガイド](https://github.com/gp247net/gp247-docs/blob/main/extension/install-extension.md) · [コマンドリファレンス](https://github.com/gp247net/gp247-docs/blob/main/system/command-line-reference.md)。
+- 詳細：[プラグイン・テンプレートのインストールガイド](https://github.com/gp247net/gp247-docs/blob/main/extension/install-extension.md) · [コマンドリファレンス](https://github.com/gp247net/gp247-docs/blob/main/cli/cli-extensions_ja.md)。
 
 ## 設定
 

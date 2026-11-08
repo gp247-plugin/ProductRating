@@ -74,7 +74,7 @@ php artisan gp247:ext-install --type=plugin --key=ProductRating
 - The command refuses a plugin that is already installed. To move to a newer version, run `php artisan gp247:ext-update --type=plugin --key=ProductRating`.
 - Append `--json` to get machine-readable output (for scripts/CI).
 - The command replaces steps 1–2 above. The post-install steps still apply: if clicking the new menu gives a "page not found" error, still run `php artisan optimize:clear` as in step 3; then check the result as in step 4 (the two new menu entries) and step 5 (the **"Ratings & reviews"** block on a product page).
-- More: [Installing Plugins & Templates](https://github.com/gp247net/gp247-docs/blob/main/extension/install-extension.md) · [Command reference](https://github.com/gp247net/gp247-docs/blob/main/system/command-line-reference.md).
+- More: [Installing Plugins & Templates](https://github.com/gp247net/gp247-docs/blob/main/extension/install-extension.md) · [Command reference](https://github.com/gp247net/gp247-docs/blob/main/cli/cli-extensions.md).
 
 ## Settings
 

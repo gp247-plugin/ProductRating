@@ -74,7 +74,7 @@ php artisan gp247:ext-install --type=plugin --key=ProductRating
 - Nếu plugin đã được cài, lệnh sẽ từ chối. Để lên bản mới, chạy `php artisan gp247:ext-update --type=plugin --key=ProductRating`.
 - Thêm `--json` vào cuối lệnh để nhận kết quả dạng máy đọc được (dùng cho script/CI).
 - Lệnh thay cho các bước 1–2 ở trên. Các bước sau khi cài vẫn giữ nguyên: nếu bấm vào menu mới gặp lỗi "không tìm thấy trang", vẫn chạy `php artisan optimize:clear` như bước 3; sau đó kiểm tra như bước 4 (hai mục menu mới) và bước 5 (khối **"Đánh giá sản phẩm"** trên trang sản phẩm).
-- Chi tiết: [Hướng dẫn cài đặt Plugin & Template](https://github.com/gp247net/gp247-docs/blob/main/extension/install-extension_vi.md) · [Tra cứu lệnh](https://github.com/gp247net/gp247-docs/blob/main/system/command-line-reference_vi.md).
+- Chi tiết: [Hướng dẫn cài đặt Plugin & Template](https://github.com/gp247net/gp247-docs/blob/main/extension/install-extension_vi.md) · [Tra cứu lệnh](https://github.com/gp247net/gp247-docs/blob/main/cli/cli-extensions_vi.md).
 
 ## Cấu hình
 
