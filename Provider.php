@@ -42,6 +42,13 @@
      ];
      config(['gp247-config.front.plugin_hooks' => $hooks]);
 
+     // JSON-LD aggregateRating for gp247/front (US-product-rating-seo-aggregate-rating,
+     // modification 20261116T050835): same runtime-append idiom; a front version
+     // without this registry simply ignores the key.
+     $ratingResolvers = (array) config('gp247-config.front.seo_product_rating_resolvers', []);
+     $ratingResolvers[] = [\App\GP247\Plugins\ProductRating\Hooks\SeoRatingResolver::class, 'resolve'];
+     config(['gp247-config.front.seo_product_rating_resolvers' => $ratingResolvers]);
+
      // US-PLG-004: register the plugin's Livewire class namespaces so its
      // components resolve without relying on Composer autoload discovery at the
      // host. The component name travels in every livewire/update round-trip, so
