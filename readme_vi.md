@@ -21,6 +21,8 @@ biết ai có quyền làm gì với một đánh giá.
 - Màn hình **duyệt đánh giá** và màn hình **thống kê theo từng gian hàng**.
 - Bạn **trả lời công khai** dưới mỗi đánh giá.
 - Khách **tự sửa hoặc gỡ** đánh giá của chính mình.
+- **Sao đánh giá trên Google**: trang sản phẩm có đánh giá đã duyệt tự kèm dữ liệu điểm trung bình và số đánh giá theo chuẩn
+  của Google (cần gp247/front 3.10 trở lên). Google quyết định có hiển thị sao trong kết quả tìm kiếm hay không.
 - Trên **sàn nhiều người bán** (plugin MultiVendor), mỗi gian hàng tự trả lời đánh
   giá sản phẩm mình bán, và phản hồi hiển thị kèm tên gian hàng đó.
 
