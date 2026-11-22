@@ -5,7 +5,7 @@
 ## Giới thiệu
 
 Plugin này cho phép khách hàng chấm điểm và viết nhận xét cho sản phẩm trên
-website bán hàng GP247, đồng thời cho bạn — chủ shop — công cụ để kiểm duyệt và
+website bán hàng S-Cart, đồng thời cho bạn — chủ shop — công cụ để kiểm duyệt và
 trả lời những đánh giá đó. Tài liệu dành cho người quản trị cửa hàng (không cần
 biết lập trình); phần cuối có thêm hướng dẫn riêng cho người làm giao diện và lập
 trình viên. Đọc xong bạn sẽ cài được plugin, hiểu mình bật/tắt được những gì, và
@@ -299,4 +299,4 @@ Tất cả chỉ đếm đánh giá **đã duyệt**.
 
 ---
 
-<sub>📅 **Cập nhật lần cuối:** 2026-10-22 · ✍️ **Tác giả (Author):** GP247</sub>
+<sub>📅 **Cập nhật lần cuối:** 2026-11-22 · ✍️ **Tác giả (Author):** GP247</sub>

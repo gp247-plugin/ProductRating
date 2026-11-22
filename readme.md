@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This plugin lets your customers rate and review the products on your GP247 store,
+This plugin lets your customers rate and review the products on your S-Cart store,
 and gives you — the shop owner — the tools to moderate and answer those reviews.
 It is written for store administrators (no programming needed); the last two
 sections add notes for theme designers and developers. By the end you will be able
@@ -298,4 +298,4 @@ All of them count **approved** reviews only.
 
 ---
 
-<sub>📅 **Last updated:** 2026-10-22 · ✍️ **Author:** GP247</sub>
+<sub>📅 **Last updated:** 2026-11-22 · ✍️ **Author:** GP247</sub>
